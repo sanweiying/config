@@ -1,0 +1,110 @@
+﻿
+
+               使用GIT向内核提交patch
+
+
+1. 前提条件：
+
+您的第一封patch[PATCH v1]的Message-ID为：
+<1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+您的第二封patch[PATCH v1]的Message-ID为：
+<1303990781-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+维护者对您第一封patch恢复的Message-ID为：
+<20110505163008.GA2139@joana>
+维护者对您第二封patch恢复的Message-ID为：
+<20110511175555.GE22065@joana>
+
+连续回复如下构成树状列表thread：
+<1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+    <20110505163008.GA2139@joana>
+    <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+        <20110511175555.GE22065@joana>
+
+您的第三封patch提交过程如下：
+
+2. 生成patch：
+$ git format-patch --thread=deep|shallow			\
+		   --in-reply-to=<20110505163008.GA2139@joana>	\
+		   -s commit号
+根据提示填写patch的标题等patch相关信息。
+
+注意：deep/shallow参数用来构成树状邮件列表thread，不同值产生不同形式的列表
+      树形。
+注意：commit号可以通过git log查询得知。
+注意：通过-s可以产生Signed-off-by字段。如果多个开发者参与该patch的编写，则
+      patch可以通过git-format-patch在他们的git repository之间传递，由最后
+      一人将patch送往社区，这可以为所有参与者都添加到Signed-off-by字段。这
+      样的patch同时也意味着它得到所有参与者的认可。
+
+3. 编辑patch：
+3.1. 首先需要编辑patch版本字段，如在Subject字段里追加v3标记
+
+3.2. 编辑In-Reply-to和References字段形成树状thread
+构成邮件列表最重要的RFC822字段是References字段，表示thread中的邮件参照路
+径。为上面树状thread，您可能期望多种不同形式的回复，下面分别举例。
+
+注意：References是RFC822多字段体内容（field-body-content）字段，多字段体内
+      容填写时需要为每个字段内容都回车换行，再加一个空格（SPACE）或制表符
+      （HTAB）。
+
+3.2.1. deep形式
+期望树：
+<1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+    <20110505163008.GA2139@joana>
+    <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+        <20110511175555.GE22065@joana>
+            <新邮件>
+填写域：
+In-Reply-to: <20110511175555.GE22065@joana>
+References: <1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+ <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+ <20110511175555.GE22065@joana>
+
+3.2.2. shallow形式
+期望树：
+<1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+    <20110505163008.GA2139@joana>
+    <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+        <20110511175555.GE22065@joana>
+    <新邮件>
+填写域：
+In-Reply-to: <1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+References: <1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+
+3.2.3. 其他形式
+期望树：
+<1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+    <20110505163008.GA2139@joana>
+    <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+        <20110511175555.GE22065@joana>
+        <新邮件>
+填写域：
+In-Reply-to: <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+References: <1303990781-15538-1-git-send-email-Ruiyi.zhang@atheros.com>
+ <1304657051-26453-1-git-send-email-Ruiyi.zhang@atheros.com>
+
+4. 发送patch：
+$ git send-email --in-reply-to="<20110511175555.GE22065@joana>" \
+		 --thread --chain-reply-to			\
+		 --smtp-server="邮件服务器地址或域名"		\
+		 --to="邮件列表全名"				\
+		 --smtp-user=自己的邮件服务器用户名		\
+		 patch文件
+根据提示填写接收者（To或Cc）和发送者（From）等信件相关信息。
+
+注意：RFC822的邮件发送者和接收者姓名格式为：全名 <邮箱地址>，例如：
+      "Gustavo F. Padovan" <padovan@profusion.mobi>。
+      为表示尊重，请尽可能写上对方的全名而非只有邮箱地址。
+
+5. 其他事项
+注意到邮件列表中一般不Cc单个收件人，而是直接To整个列表。单个的To和Cc会导致
+被回复的信件在列表中被多重复制，最后的To或Cc字段将包含所有回复者而使邮件客
+户端软件MUA出错。
+
+这种情况下请不要再对邮件进行Cc和To字段的追加：对方回复您的邮件中有
+Mail-Follow-Up字段，里面只有邮件列表地址而没有回复者邮件地址时。这表明对方
+不期望您将他添加在Cc或To字段中，而收到重复的信件。任何时候您回复的邮件应当
+总是在To字段中包含Return-Path中所包含的地址。
+
+如果您的邮件希望指定的接收人有所反应（如，参与讨论，给出建议，接受patch
+等），您可以将其邮件地址添加到Cc字段中。
